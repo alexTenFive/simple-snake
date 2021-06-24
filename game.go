@@ -9,6 +9,7 @@ import (
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font"
 	"io/ioutil"
+	"math"
 	"snaketest/pkg/vec"
 	"time"
 )
@@ -28,7 +29,7 @@ type Game struct {
 
 const (
 	gameSpeed      = 26
-	snakeStartSize = 2
+	snakeStartSize = 5
 	blinkSpeed     = time.Millisecond * 10
 )
 
@@ -41,6 +42,10 @@ func NewGame() *Game {
 	ttfFont, err := truetype.Parse(fontData)
 	if err != nil {
 		panic("cannot parse asset font")
+	}
+
+	if err := loadSnakeSprites(); err != nil {
+		panic(fmt.Sprintf("cannot load snake sprites: %s", err))
 	}
 
 	return &Game{
@@ -72,13 +77,10 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	//if time.Since(g.snake.directionChangeLastTime) < time.Millisecond * 12 {
-	//	return nil
-	//}
 	// TODO: two directions simultaniously leads to bug and eat snakeself
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyW):
-		g.snake.setDirection(vec.Vector{0, -1})
+		g.snake.setDirection(vec.Vector{X: 0, Y: -1})
 	case inpututil.IsKeyJustPressed(ebiten.KeyS):
 		g.snake.setDirection(vec.Vector{X: 0, Y: 1})
 	case inpututil.IsKeyJustPressed(ebiten.KeyA):
@@ -87,7 +89,6 @@ func (g *Game) Update() error {
 		g.snake.setDirection(vec.Vector{X: 1, Y: 0})
 	}
 	g.snake.updateDirections()
-	//g.snake.directionChangeLastTime = time.Now()
 
 	if time.Since(g.lastMove) < time.Second/gameSpeed {
 		return nil
@@ -102,16 +103,8 @@ func (g *Game) Update() error {
 			break
 		}
 
-		switch {
-		case b.Direction.X == 1:
-			b.Position.X += speed
-		case b.Direction.X == -1:
-			b.Position.X -= speed
-		case b.Direction.Y == 1:
-			b.Position.Y += speed
-		case b.Direction.Y == -1:
-			b.Position.Y -= speed
-		}
+		b.Position.X += b.Direction.X * speed
+		b.Position.Y += b.Direction.Y * speed
 
 		if b.Position.X > screenWidth {
 			b.Position.X = float64(int(b.Position.X)%screenWidth) - cornerEdge
@@ -145,6 +138,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, b := range g.snake.body {
 		op = &ebiten.DrawImageOptions{}
 
+		op.GeoM.Translate(-float64(partSize/2), -float64(partSize/2))
+
+		var degrees float64
+		switch {
+		case b.Direction.X == 1:
+		case b.Direction.X == -1:
+			degrees = 180
+		case b.Direction.Y == 1:
+			degrees = 90
+		case b.Direction.Y == -1:
+			degrees = 270
+		}
+
+		op.GeoM.Rotate(degrees * (2 * math.Pi / 360))
 		op.GeoM.Translate(b.Position.X, b.Position.Y)
 
 		screen.DrawImage(b.img, op)
@@ -152,8 +159,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// draw apple
 	if g.apple != nil {
 		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(-float64(partSize/2), -float64(partSize/2))
+		op.GeoM.Rotate(g.apple.R * (2 * math.Pi / 360))
 		op.GeoM.Translate(g.apple.Position.X, g.apple.Position.Y)
 		screen.DrawImage(g.apple.img, op)
+		g.apple.R++
+		if g.apple.R > 360 {
+			g.apple.R = 0
+		}
 	}
 
 	if g.isGameOver {

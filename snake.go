@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"golang.org/x/image/colornames"
 	"snaketest/pkg/vec"
 )
 
@@ -14,6 +13,7 @@ type (
 		GoalDirections []vec.Vector
 		img            *ebiten.Image
 	}
+
 	Snake struct {
 		//directionChangeLastTime time.Time
 		Direction vec.Vector
@@ -33,10 +33,13 @@ func newSnake(startPos vec.Vector, size int) *Snake {
 	var im *ebiten.Image
 
 	for i := 0; i < size; i++ {
-		im = ebiten.NewImage(partSize, partSize)
-		im.Fill(colornames.Snow)
-		if i == size-1 {
-			im.Fill(colornames.Red)
+
+		if i == 0 {
+			im = snakeParts[SnakeTailPart]
+		} else if i == size-1 {
+			im = snakeParts[SnakeHeadPart]
+		} else {
+			im = snakeParts[SnakeBodyPart]
 		}
 		body = append(body, &bodyPart{
 			Direction: vec.Vector{X: 1, Y: 0},
@@ -97,13 +100,14 @@ func (x *Snake) addPart() {
 		partPosition.Y = x.body[0].Position.Y + partSize
 	}
 
+	x.body[0].img = snakeParts[SnakeBodyPart]
 	x.body = append([]*bodyPart{
 		{
 			Direction:      x.body[0].Direction,
 			Position:       partPosition,
 			GoalPositions:  x.body[0].GoalPositions,
 			GoalDirections: x.body[0].GoalDirections,
-			img:            x.body[0].img,
+			img:            snakeParts[SnakeTailPart],
 		},
 	}, x.body...)
 }
