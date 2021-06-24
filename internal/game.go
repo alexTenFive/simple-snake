@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"fmt"
@@ -31,10 +31,12 @@ const (
 	gameSpeed      = 26
 	snakeStartSize = 5
 	blinkSpeed     = time.Millisecond * 10
+	screenWidth    = 1280
+	screenHeight   = 720
 )
 
 func NewGame() *Game {
-	fontData, err := ioutil.ReadFile("assets/font/Etastro.ttf")
+	fontData, err := ioutil.ReadFile("../assets/font/Etastro.ttf")
 	if err != nil {
 		panic("cannot load asset font")
 	}

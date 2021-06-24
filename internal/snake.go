@@ -1,7 +1,8 @@
-package main
+package internal
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"golang.org/x/exp/rand"
 	"snaketest/pkg/vec"
 )
 
@@ -39,7 +40,7 @@ func newSnake(startPos vec.Vector, size int) *Snake {
 		} else if i == size-1 {
 			im = snakeParts[SnakeHeadPart]
 		} else {
-			im = snakeParts[SnakeBodyPart]
+			im = snakeParts[SnakeBodyOnePart+int64(rand.Intn(2))]
 		}
 		body = append(body, &bodyPart{
 			Direction: vec.Vector{X: 1, Y: 0},
@@ -100,7 +101,7 @@ func (x *Snake) addPart() {
 		partPosition.Y = x.body[0].Position.Y + partSize
 	}
 
-	x.body[0].img = snakeParts[SnakeBodyPart]
+	x.body[0].img = snakeParts[SnakeBodyOnePart+int64(rand.Intn(2))]
 	x.body = append([]*bodyPart{
 		{
 			Direction:      x.body[0].Direction,

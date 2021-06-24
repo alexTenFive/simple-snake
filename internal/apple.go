@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
@@ -8,8 +8,8 @@ import (
 
 type (
 	Apple struct {
-		img *ebiten.Image
-		R float64
+		img      *ebiten.Image
+		R        float64
 		Position vec.Vector
 	}
 )
@@ -19,5 +19,5 @@ func generateApple() *Apple {
 	yr := rand.Intn(screenHeight)
 	im := snakeParts[ApplePart]
 
-	return &Apple{Position: vec.Vector{X: float64(xr-(xr%partSize)), Y: float64(yr-(yr%partSize))}, img: im}
+	return &Apple{Position: vec.Vector{X: float64(xr - (xr % partSize)), Y: float64(yr - (yr % partSize))}, img: im}
 }

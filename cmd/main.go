@@ -4,6 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/rand"
 	"log"
+	"snaketest/internal"
 	"time"
 )
 
@@ -18,7 +19,7 @@ func main() {
 	ebiten.SetWindowTitle("GUI Editor")
 	ebiten.SetCursorMode(ebiten.CursorModeVisible)
 
-	g := NewGame()
+	g := internal.NewGame()
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
