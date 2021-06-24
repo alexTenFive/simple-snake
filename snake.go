@@ -2,29 +2,29 @@ package main
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"golang.org/x/image/colornames"
 	"snaketest/pkg/vec"
-	"time"
 )
 
 type (
 	bodyPart struct {
-		Direction vec.Vector
-		Position  vec.Vector
-		GoalPositions []vec.Vector
+		Direction      vec.Vector
+		Position       vec.Vector
+		GoalPositions  []vec.Vector
 		GoalDirections []vec.Vector
-		img       *ebiten.Image
+		img            *ebiten.Image
 	}
 	Snake struct {
+		//directionChangeLastTime time.Time
 		Direction vec.Vector
 		body      []*bodyPart
 	}
 )
 
-const(
-	partSize = 16
-	speed = 4
+const (
+	partSize   = 16
+	speed      = 16
+	cornerEdge = 16
 )
 
 func newSnake(startPos vec.Vector, size int) *Snake {
@@ -39,7 +39,7 @@ func newSnake(startPos vec.Vector, size int) *Snake {
 			im.Fill(colornames.Red)
 		}
 		body = append(body, &bodyPart{
-			Direction: vec.Vector{X: 1},
+			Direction: vec.Vector{X: 1, Y: 0},
 			Position:  vec.Vector{X: position, Y: startPos.Y},
 			img:       im,
 		})
@@ -47,22 +47,27 @@ func newSnake(startPos vec.Vector, size int) *Snake {
 	}
 
 	s := &Snake{
-		body: body,
+		Direction: vec.Vector{X: 1, Y: 0},
+		body:      body,
 	}
 	return s
 }
 func (x *Snake) setDirection(dir vec.Vector) {
+	if dir.X == 1 && x.Direction.X == -1 || dir.X == -1 && x.Direction.X == 1 ||
+		dir.Y == -1 && x.Direction.Y == 1 || dir.Y == 1 && x.Direction.Y == -1 {
+		return
+	}
+
 	x.Direction = dir
 	x.body[len(x.body)-1].Direction = x.Direction
 
-	for i := len(x.body)-2; i >= 0; i-- {
+	for i := len(x.body) - 2; i >= 0; i-- {
 		x.body[i].GoalPositions = append(x.body[i].GoalPositions, x.body[len(x.body)-1].Position)
 		x.body[i].GoalDirections = append(x.body[i].GoalDirections, x.Direction)
 	}
 }
-
 func (x *Snake) updateDirections() {
-	for i := len(x.body)-2; i >= 0; i-- {
+	for i := len(x.body) - 2; i >= 0; i-- {
 		if len(x.body[i].GoalPositions) == 0 {
 			continue
 		}
@@ -73,48 +78,32 @@ func (x *Snake) updateDirections() {
 		}
 	}
 }
+func (x *Snake) addPart() {
+	var partPosition vec.Vector
+	if len(x.body) == 0 {
+		return
+	}
 
+	partPosition = x.body[0].Position
 
-func (x *Snake) Start() {
-
-}
-
-func (x *Snake) Update() error {
 	switch {
-	case inpututil.IsKeyJustPressed(ebiten.KeyW):
-		x.setDirection(vec.Vector{0, -1})
-	case inpututil.IsKeyJustPressed(ebiten.KeyS):
-		x.setDirection(vec.Vector{X: 0, Y: 1})
-	case inpututil.IsKeyJustPressed(ebiten.KeyA):
-		x.setDirection(vec.Vector{X: -1, Y: 0})
-	case inpututil.IsKeyJustPressed(ebiten.KeyD):
-		x.setDirection(vec.Vector{X: 1, Y: 0})
+	case x.body[0].Direction.X == 1:
+		partPosition.X = x.body[0].Position.X - partSize
+	case x.body[0].Direction.X == -1:
+		partPosition.X = x.body[0].Position.X + partSize
+	case x.body[0].Direction.Y == 1:
+		partPosition.Y = x.body[0].Position.Y - partSize
+	case x.body[0].Direction.Y == -1:
+		partPosition.Y = x.body[0].Position.Y + partSize
 	}
-	x.updateDirections()
 
-	return nil
+	x.body = append([]*bodyPart{
+		{
+			Direction:      x.body[0].Direction,
+			Position:       partPosition,
+			GoalPositions:  x.body[0].GoalPositions,
+			GoalDirections: x.body[0].GoalDirections,
+			img:            x.body[0].img,
+		},
+	}, x.body...)
 }
-
-func (x *Snake) Draw(screen *ebiten.Image) {
-	var op *ebiten.DrawImageOptions
-	for _, b := range x.body {
-		op = &ebiten.DrawImageOptions{}
-		switch {
-		case b.Direction.X == 1:
-			b.Position.X += speed
-		case b.Direction.X == -1:
-			b.Position.X -= speed
-		case b.Direction.Y == 1:
-			b.Position.Y += speed
-		case b.Direction.Y == -1:
-			b.Position.Y -= speed
-		}
-
-		op.GeoM.Translate(b.Position.X, b.Position.Y)
-
-		screen.DrawImage(b.img, op)
-		time.Sleep(time.Microsecond * 30)
-	}
-}
-
-
